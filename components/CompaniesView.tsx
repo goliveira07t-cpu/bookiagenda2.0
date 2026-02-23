@@ -130,17 +130,41 @@ const CompaniesView: React.FC = () => {
     try {
       setIsUploadingLogo(true);
       const timestamp = new Date().getTime();
-      const fileName = `logo_${timestamp}_${file.name}`;
+      const fileName = `logo_${timestamp}_${file.name.replace(/\s+/g, '_')}`;
       
+      // Tentar fazer upload no bucket 'logos' (mais comum no Supabase)
       const { error, data } = await supabase.storage
-        .from('company-logos')
-        .upload(`logos/${fileName}`, file);
+        .from('logos')
+        .upload(`companies/${fileName}`, file, {
+          cacheControl: '3600',
+          upsert: false
+        });
       
-      if (error) throw error;
+      if (error) {
+        // Se o bucket não existir, tentar em um bucket alternativo
+        if (error.message.includes('not found')) {
+          const { error: altError, data: altData } = await supabase.storage
+            .from('avatars')
+            .upload(`company-logos/${fileName}`, file, {
+              cacheControl: '3600',
+              upsert: false
+            });
+          
+          if (altError) throw altError;
+          
+          const { data: { publicUrl } } = supabase.storage
+            .from('avatars')
+            .getPublicUrl(`company-logos/${fileName}`);
+          
+          return publicUrl;
+        } else {
+          throw error;
+        }
+      }
       
       const { data: { publicUrl } } = supabase.storage
-        .from('company-logos')
-        .getPublicUrl(`logos/${fileName}`);
+        .from('logos')
+        .getPublicUrl(`companies/${fileName}`);
       
       return publicUrl;
     } catch (error: any) {
