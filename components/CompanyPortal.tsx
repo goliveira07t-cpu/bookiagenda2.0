@@ -367,6 +367,18 @@ const CompanyPortal: React.FC<CompanyPortalProps> = ({ company, onLogout, theme,
     setIsAddProfessionalModalOpen(true);
   };
 
+  const handleEditService = (service: any) => {
+    setServiceForm({ name: service.name, duration: service.duration, price: service.price });
+    setEditingBookingId(service.id);
+    setIsAddServiceModalOpen(true);
+  };
+
+  const handleDeleteService = (service: any) => {
+    setItemToDelete(service);
+    setDeleteType('service');
+    setIsDeleteModalOpen(true);
+  };
+
   const handleTimeChange = (newStartTime: string) => {
     const service = services.find(s => s.id === bookingForm.service_id);
     const duration = service ? (service.duration || 40) : 40;
@@ -599,11 +611,18 @@ const CompanyPortal: React.FC<CompanyPortalProps> = ({ company, onLogout, theme,
         duration: Number(serviceForm.duration) || 30,
         price: Number(serviceForm.price) || 0
       };
-      const { error } = await supabase.from('services').insert([payload]);
-      if (error) throw error;
+      
+      if (editingBookingId) {
+        const { error } = await supabase.from('services').update(payload).eq('id', editingBookingId);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase.from('services').insert([payload]);
+        if (error) throw error;
+      }
+
       setIsAddServiceModalOpen(false);
       setServiceForm({ name: '', duration: 30, price: 0 });
-      // Refresh services list
+      setEditingBookingId(null);
       fetchTableData('services');
       fetchSupportData();
     } catch (err: any) {
@@ -1135,7 +1154,9 @@ const CompanyPortal: React.FC<CompanyPortalProps> = ({ company, onLogout, theme,
             subtitle="Catálogo oficial de itens"
             icon={<Scissors />}
             data={data} 
-            onAdd={() => setIsAddServiceModalOpen(true)} 
+            onAdd={() => { setIsAddServiceModalOpen(true); setServiceForm({ name: '', duration: 30, price: 0 }); setEditingBookingId(null); }} 
+            onEdit={handleEditService}
+            onDelete={handleDeleteService}
             stats={[
               { label: 'Itens Totais', value: data.length, icon: <Package size={20}/>, color: 'bg-indigo-500' },
               { label: 'Favorito', value: 'Corte', icon: <Target size={20}/>, color: 'bg-fuchsia-500' },
@@ -1409,9 +1430,9 @@ const CompanyPortal: React.FC<CompanyPortalProps> = ({ company, onLogout, theme,
               <div className="p-10 pb-6 flex justify-between items-start">
                 <div className="flex gap-5">
                   <div className="w-16 h-16 rounded-3xl bg-indigo-600 flex items-center justify-center text-white shadow-2xl"><Scissors size={32} /></div>
-                  <div><h2 className="text-3xl font-black text-slate-900 dark:text-white tracking-tighter">Novo Serviço</h2><p className="text-slate-400 dark:text-slate-500 text-xs font-black uppercase tracking-[0.2em] mt-2">Adicione um item ao cardápio</p></div>
+                  <div><h2 className="text-3xl font-black text-slate-900 dark:text-white tracking-tighter">{editingBookingId ? 'Editar Serviço' : 'Novo Serviço'}</h2><p className="text-slate-400 dark:text-slate-500 text-xs font-black uppercase tracking-[0.2em] mt-2">{editingBookingId ? 'Atualizar item' : 'Adicione um item ao cardápio'}</p></div>
                 </div>
-                <button onClick={() => { setIsAddServiceModalOpen(false); setServiceForm({ name: '', duration: 30, price: 0 }); }} className="p-4 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-3xl text-slate-400 transition-all"><X size={28} /></button>
+                <button onClick={() => { setIsAddServiceModalOpen(false); setServiceForm({ name: '', duration: 30, price: 0 }); setEditingBookingId(null); }} className="p-4 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-3xl text-slate-400 transition-all"><X size={28} /></button>
               </div>
               <form onSubmit={handleCreateService} className="p-10 pt-4 space-y-6">
                 <div className="space-y-2">
@@ -1429,7 +1450,7 @@ const CompanyPortal: React.FC<CompanyPortalProps> = ({ company, onLogout, theme,
                   </div>
                 </div>
                 <div className="pt-4"><button type="submit" disabled={submitting} className="w-full text-white py-6 rounded-[2rem] font-black text-lg bg-indigo-600 hover:bg-indigo-700 active:scale-95 transition-all shadow-2xl flex items-center justify-center gap-3">
-                  {submitting ? <div className="w-7 h-7 border-4 border-white/20 border-t-white rounded-full animate-spin"></div> : <>Cadastrar Serviço <CheckCircle2 size={24} /></>}
+                  {submitting ? <div className="w-7 h-7 border-4 border-white/20 border-t-white rounded-full animate-spin"></div> : <>{editingBookingId ? 'Salvar Alterações' : 'Cadastrar Serviço'} <CheckCircle2 size={24} /></>}
                 </button></div>
               </form>
             </div>
