@@ -437,36 +437,6 @@ const CompaniesView: React.FC = () => {
               </div>
 
               <div className="space-y-2">
-                <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1">E-mail de Acesso</label>
-                  <div className="relative group">
-                    <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 dark:text-slate-600 group-focus-within:text-indigo-600 transition-colors" size={18} />
-                    <input 
-                      required 
-                      type="email"
-                      className="w-full pl-11 pr-4 py-4 rounded-2xl bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800 focus:border-indigo-500 dark:focus:border-indigo-500 focus:bg-white dark:focus:bg-slate-900 outline-none font-bold text-sm transition-all dark:text-white dark:placeholder:text-slate-700"
-                      value={formData.owner_email} 
-                      onChange={e => setFormData({...formData, owner_email: e.target.value})}
-                      placeholder="email@acesso.com"
-                    />
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1">Senha de Acesso</label>
-                  <div className="relative group">
-                    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 dark:text-slate-600 group-focus-within:text-indigo-600 transition-colors" size={18} />
-                    <input 
-                      required 
-                      type="password"
-                      className="w-full pl-11 pr-4 py-4 rounded-2xl bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800 focus:border-indigo-500 dark:focus:border-indigo-500 focus:bg-white dark:focus:bg-slate-900 outline-none font-bold text-sm transition-all dark:text-white dark:placeholder:text-slate-700"
-                      value={formData.access_password} 
-                      onChange={e => setFormData({...formData, access_password: e.target.value})}
-                      placeholder="Mín. 8 chars, letras e números"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              <div className="space-y-2">
                 <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1">URL da Logomarca</label>
                 <div className="relative group">
                   {logoPreview && (
@@ -494,6 +464,34 @@ const CompaniesView: React.FC = () => {
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1">E-mail de Acesso</label>
+                  <div className="relative group">
+                    <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 dark:text-slate-600 group-focus-within:text-indigo-600 transition-colors" size={18} />
+                    <input 
+                      required 
+                      type="email"
+                      className="w-full pl-11 pr-4 py-4 rounded-2xl bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800 focus:border-indigo-500 dark:focus:border-indigo-500 focus:bg-white dark:focus:bg-slate-900 outline-none font-bold text-sm transition-all dark:text-white dark:placeholder:text-slate-700"
+                      value={formData.owner_email} 
+                      onChange={e => setFormData({...formData, owner_email: e.target.value})}
+                      placeholder="email@acesso.com"
+                    />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1">Senha de Acesso</label>
+                  <div className="relative group">
+                    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 dark:text-slate-600 group-focus-within:text-indigo-600 transition-colors" size={18} />
+                    <input 
+                      required 
+                      type="password"
+                      className="w-full pl-11 pr-4 py-4 rounded-2xl bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800 focus:border-indigo-500 dark:focus:border-indigo-500 focus:bg-white dark:focus:bg-slate-900 outline-none font-bold text-sm transition-all dark:text-white dark:placeholder:text-slate-700"
+                      value={formData.access_password} 
+                      onChange={e => setFormData({...formData, access_password: e.target.value})}
+                      placeholder="Mín. 8 chars, letras e números"
+                    />
+                  </div>
+                </div>
                 <div className="space-y-2">
                   <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1">Telefone / WhatsApp</label>
                   <div className="relative group">
