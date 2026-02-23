@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { 
   Scissors, 
@@ -29,7 +28,9 @@ import {
   Instagram,
   Facebook,
   Globe,
-  MessageCircle
+  MessageCircle,
+  Edit,
+  Trash
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { BookiLogo } from '../App';
@@ -282,6 +283,25 @@ const PublicBookingView: React.FC<PublicBookingViewProps> = ({ companyId, slug, 
     return days;
   };
 
+  const handleEditService = (serviceId: string) => {
+    console.log(`Edit service with ID: ${serviceId}`);
+    // Add logic to handle editing a service
+  };
+
+  const handleDeleteService = async (serviceId: string) => {
+    if (!confirm('Tem certeza que deseja excluir este serviço?')) return;
+    try {
+      const { error } = await supabase.from('services').delete().eq('id', serviceId);
+      if (error) throw error;
+      alert('Serviço excluído com sucesso.');
+      // Refresh the services list
+      const { data: servs } = await supabase.from('services').select('*').eq('company_id', company.id);
+      setServices(servs || []);
+    } catch (err: any) {
+      alert(err.message);
+    }
+  };
+
   if (loading) return <div className="min-h-screen flex items-center justify-center dark:bg-slate-950"><div className="w-10 h-10 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin"></div></div>;
   if (notFound) return <div className="min-h-screen flex flex-col items-center justify-center p-6 text-center dark:bg-slate-950"><h1 className="text-4xl font-black mb-4 dark:text-white">Salão Não Encontrado</h1><p className="text-slate-500 mb-8">O link acessado é inválido ou a empresa não existe.</p><button onClick={() => window.location.href = '/'} className="px-8 py-4 bg-indigo-600 text-white rounded-2xl font-black">Voltar ao Início</button></div>;
 
@@ -487,7 +507,30 @@ const PublicBookingView: React.FC<PublicBookingViewProps> = ({ companyId, slug, 
                         <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2">Serviço</label>
                         <select className="w-full p-3 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800 font-bold text-sm dark:text-white outline-none focus:ring-2 focus:ring-indigo-500/20" value={bookingForm.service_id} onChange={e => setBookingForm({...bookingForm, service_id: e.target.value})}>
                           <option value="">Selecione...</option>
-                          {services.map(s => <option key={s.id} value={s.id}>{s.name} (R$ {s.price})</option>)}
+                          {services.map(service => (
+                            <div key={service.id} className="flex items-center justify-between bg-white dark:bg-slate-900 p-6 rounded-[2rem] border border-slate-100 dark:border-slate-800 shadow-xl shadow-slate-200/50 dark:shadow-none">
+                              <div className="flex items-center gap-4">
+                                <div className="w-12 h-12 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 rounded-full flex items-center justify-center">
+                                  <Scissors size={20} />
+                                </div>
+                                <div>
+                                  <h4 className="font-black text-lg text-slate-900 dark:text-white">{service.name}</h4>
+                                  <p className="text-slate-400 font-bold text-sm">{service.duration} min</p>
+                                </div>
+                              </div>
+                              <div className="text-right flex flex-col items-end gap-1">
+                                <p className="font-black text-slate-900 dark:text-white">R$ {service.price}</p>
+                                <div className="flex gap-2">
+                                  <button onClick={() => handleEditService(service.id)} className="text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 p-2 rounded-lg">
+                                    <Edit size={16} />
+                                  </button>
+                                  <button onClick={() => handleDeleteService(service.id)} className="text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 p-2 rounded-lg">
+                                    <Trash size={16} />
+                                  </button>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
                         </select>
                       </div>
                       
