@@ -23,7 +23,6 @@ import {
   AlertTriangle,
   Trash2,
   Package,
-  Upload,
   Camera
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
@@ -54,10 +53,8 @@ const CompaniesView: React.FC = () => {
     plan: '',
     logo_url: ''
   });
-  const [logoFile, setLogoFile] = useState<File | null>(null);
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isUploadingLogo, setIsUploadingLogo] = useState(false);
 
   useEffect(() => {
     fetchCompanies();
@@ -101,78 +98,23 @@ const CompaniesView: React.FC = () => {
       plan: availablePlans.length > 0 ? availablePlans[0].name : '',
       logo_url: ''
     });
-    setLogoFile(null);
     setLogoPreview(null);
     setIsModalOpen(true);
   };
 
   const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      if (!file.type.startsWith('image/')) {
-        alert('Por favor, selecione uma imagem válida.');
-        return;
-      }
-      if (file.size > 5 * 1024 * 1024) {
-        alert('A imagem deve ter no máximo 5MB.');
-        return;
-      }
-      setLogoFile(file);
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        setLogoPreview(e.target?.result as string);
-      };
-      reader.readAsDataURL(file);
+    const url = e.target.value;
+    setFormData({...formData, logo_url: url});
+    if (url) {
+      setLogoPreview(url);
+    } else {
+      setLogoPreview(null);
     }
   };
 
-  const uploadLogoToSupabase = async (file: File): Promise<string | null> => {
-    try {
-      setIsUploadingLogo(true);
-      const timestamp = new Date().getTime();
-      const fileName = `logo_${timestamp}_${file.name.replace(/\s+/g, '_')}`;
-      
-      // Tentar fazer upload no bucket 'logos' (mais comum no Supabase)
-      const { error, data } = await supabase.storage
-        .from('logos')
-        .upload(`companies/${fileName}`, file, {
-          cacheControl: '3600',
-          upsert: false
-        });
-      
-      if (error) {
-        // Se o bucket não existir, tentar em um bucket alternativo
-        if (error.message.includes('not found')) {
-          const { error: altError, data: altData } = await supabase.storage
-            .from('avatars')
-            .upload(`company-logos/${fileName}`, file, {
-              cacheControl: '3600',
-              upsert: false
-            });
-          
-          if (altError) throw altError;
-          
-          const { data: { publicUrl } } = supabase.storage
-            .from('avatars')
-            .getPublicUrl(`company-logos/${fileName}`);
-          
-          return publicUrl;
-        } else {
-          throw error;
-        }
-      }
-      
-      const { data: { publicUrl } } = supabase.storage
-        .from('logos')
-        .getPublicUrl(`companies/${fileName}`);
-      
-      return publicUrl;
-    } catch (error: any) {
-      console.error('Erro ao fazer upload da logo:', error);
-      alert('Erro ao fazer upload da logo: ' + error.message);
-      return null;
-    } finally {
-      setIsUploadingLogo(false);
+  const handleLogoUrlBlur = (url: string) => {
+    if (url) {
+      setLogoPreview(url);
     }
   };
 
@@ -191,7 +133,6 @@ const CompaniesView: React.FC = () => {
       logo_url: company.logo_url || ''
     });
     setLogoPreview(company.logo_url || null);
-    setLogoFile(null);
     setIsModalOpen(true);
   };
 
@@ -217,19 +158,6 @@ const CompaniesView: React.FC = () => {
     setIsSubmitting(true);
     
     try {
-      let logoUrl = formData.logo_url;
-      
-      // Se um novo arquivo foi selecionado, fazer upload
-      if (logoFile) {
-        const uploadedUrl = await uploadLogoToSupabase(logoFile);
-        if (uploadedUrl) {
-          logoUrl = uploadedUrl;
-        } else {
-          setIsSubmitting(false);
-          return;
-        }
-      }
-      
       const payload = { 
         name: formData.name,
         responsible_name: formData.responsible_name,
@@ -239,7 +167,7 @@ const CompaniesView: React.FC = () => {
         access_password: formData.access_password,
         category: formData.category,
         plan: formData.plan,
-        logo_url: logoUrl,
+        logo_url: formData.logo_url || null,
         status: isEditing ? undefined : 'ACTIVE'
       };
 
@@ -260,7 +188,6 @@ const CompaniesView: React.FC = () => {
       if (error) throw error;
 
       setIsModalOpen(false);
-      setLogoFile(null);
       setLogoPreview(null);
       await fetchCompanies();
     } catch (error: any) {
@@ -509,40 +436,29 @@ const CompaniesView: React.FC = () => {
               </div>
 
               <div className="space-y-2">
-                <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1">Logomarca da Empresa</label>
+                <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1">URL da Logomarca</label>
                 <div className="relative group">
                   {logoPreview && (
-                    <div className="mb-4 flex items-center gap-4 p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl">
-                      <img src={logoPreview} alt="Logo" className="w-16 h-16 object-contain rounded-lg" />
+                    <div className="mb-4 flex items-center gap-4 p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700">
+                      <img src={logoPreview} alt="Logo Preview" className="w-16 h-16 object-contain rounded-lg bg-white dark:bg-slate-900 p-2" />
                       <div className="flex-1">
                         <p className="text-xs font-bold text-slate-600 dark:text-slate-300">Preview da Logo</p>
-                        <button 
-                          type="button"
-                          onClick={() => { setLogoFile(null); setLogoPreview(null); }}
-                          className="text-xs text-rose-500 hover:text-rose-600 font-bold mt-1"
-                        >
-                          Remover
-                        </button>
+                        <p className="text-[10px] text-slate-400 dark:text-slate-500 truncate mt-1 font-mono">{logoPreview}</p>
                       </div>
                     </div>
                   )}
-                  <label className="flex items-center gap-3 p-4 rounded-2xl bg-slate-50 dark:bg-slate-950 border border-dashed border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-900 transition-all group-hover:border-indigo-500">
-                    <Camera className="text-slate-400 dark:text-slate-600 group-hover:text-indigo-600 transition-colors" size={20} />
-                    <div>
-                      <p className="font-bold text-sm text-slate-700 dark:text-slate-300">Selecione a logomarca</p>
-                      <p className="text-xs text-slate-400 dark:text-slate-600">PNG, JPG (máx. 5MB)</p>
-                    </div>
+                  <div className="relative">
+                    <Camera className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 dark:text-slate-600 group-focus-within:text-indigo-600 transition-colors" size={18} />
                     <input 
-                      type="file"
-                      accept="image/*"
+                      type="url"
+                      className="w-full pl-11 pr-4 py-4 rounded-2xl bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800 focus:border-indigo-500 dark:focus:border-indigo-500 focus:bg-white dark:focus:bg-slate-900 outline-none font-bold text-sm transition-all dark:text-white dark:placeholder:text-slate-700"
+                      value={formData.logo_url} 
                       onChange={handleLogoChange}
-                      disabled={isUploadingLogo}
-                      className="hidden"
+                      onBlur={(e) => handleLogoUrlBlur(e.target.value)}
+                      placeholder="https://exemplo.com/logo.png"
                     />
-                  </label>
-                  {isUploadingLogo && (
-                    <div className="mt-2 text-xs text-slate-400 dark:text-slate-600 font-bold">Enviando arquivo...</div>
-                  )}
+                  </div>
+                  <p className="text-xs text-slate-400 dark:text-slate-600 font-medium mt-2">Cole aqui a URL da logomarca (recomendado: PNG ou JPG)</p>
                 </div>
               </div>
 
