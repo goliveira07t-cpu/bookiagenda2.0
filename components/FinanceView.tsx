@@ -23,18 +23,6 @@ import { supabase } from '../lib/supabase';
 
 const FinanceView: React.FC = () => {
   const [loading, setLoading] = useState(true);
-  const [companies, setCompanies] = useState<any[]>([]);
-  const [selectedCompany, setSelectedCompany] = useState<string | null>(null);
-  const [professionals, setProfessionals] = useState<any[]>([]);
-  const [selectedProfessionals, setSelectedProfessionals] = useState<string[]>([]);
-  const [profits, setProfits] = useState<any[]>([]);
-  const [profitLoading, setProfitLoading] = useState(false);
-  const [startDate, setStartDate] = useState<string>(() => {
-    const d = new Date();
-    d.setDate(1);
-    return d.toISOString().slice(0,10);
-  });
-  const [endDate, setEndDate] = useState<string>(() => new Date().toISOString().slice(0,10));
   const [financeData, setFinanceData] = useState({
     totalMRR: 0,
     activeCompanies: 0,
@@ -44,68 +32,7 @@ const FinanceView: React.FC = () => {
 
   useEffect(() => {
     fetchFinanceStats();
-    fetchCompanies();
   }, []);
-
-  const fetchCompanies = async () => {
-    try {
-      const { data } = await supabase.from('companies').select('id,name').eq('status','ACTIVE');
-      setCompanies(data || []);
-      if (data && data.length > 0) setSelectedCompany(data[0].id);
-    } catch (err) {
-      console.error('Erro ao carregar companies', err);
-    }
-  };
-
-  useEffect(() => {
-    if (selectedCompany) fetchProfessionals(selectedCompany);
-  }, [selectedCompany]);
-
-  const fetchProfessionals = async (companyId: string) => {
-    try {
-      const { data } = await supabase.from('professionals').select('id,name').eq('company_id', companyId);
-      setProfessionals(data || []);
-      setSelectedProfessionals([]);
-    } catch (err) {
-      console.error('Erro ao carregar professionals', err);
-    }
-  };
-
-  const fetchProfits = async () => {
-    if (!selectedCompany) return;
-    setProfitLoading(true);
-    try {
-      // Busca bookings completados no período para a empresa
-      const { data: bookings } = await supabase
-        .from('bookings')
-        .select('professional_id, services(price)')
-        .eq('company_id', selectedCompany)
-        .eq('status', 'COMPLETED')
-        .gte('start_time', `${startDate}T00:00:00Z`)
-        .lte('start_time', `${endDate}T23:59:59Z`);
-
-      const byProf: Record<string, { name: string; total: number; count: number }> = {};
-      // initialize selected professionals map
-      const profMap: Record<string,string> = {};
-      professionals.forEach(p => profMap[p.id] = p.name);
-
-      (bookings || []).forEach((b: any) => {
-        const pid = b.professional_id || 'unassigned';
-        const price = b.services?.price || 0;
-        if (selectedProfessionals.length > 0 && !selectedProfessionals.includes(pid)) return;
-        if (!byProf[pid]) byProf[pid] = { name: profMap[pid] || 'Sem Profissional', total: 0, count: 0 };
-        byProf[pid].total += price;
-        byProf[pid].count += 1;
-      });
-
-      const result = Object.entries(byProf).map(([id, v]) => ({ id, name: v.name, total: v.total, count: v.count }));
-      setProfits(result);
-    } catch (err) {
-      console.error('Erro ao calcular lucros', err);
-    } finally {
-      setProfitLoading(false);
-    }
-  };
 
   const fetchFinanceStats = async () => {
     setLoading(true);
@@ -220,59 +147,7 @@ const FinanceView: React.FC = () => {
         />
       </div>
 
-      {/* Inserir seção Lucros por Barbeiro aqui */}
-      <div className="mt-8 bg-white dark:bg-slate-900 p-8 rounded-[2.5rem] border border-slate-200 dark:border-slate-800 shadow-sm">
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl font-black text-slate-900 dark:text-white">Lucros por Barbeiro</h2>
-          <div className="flex items-center gap-3">
-            <select value={selectedCompany || ''} onChange={e => setSelectedCompany(e.target.value)} className="px-3 py-2 rounded-2xl border bg-white dark:bg-slate-900">
-              <option value="">Selecione uma empresa</option>
-              {companies.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-            </select>
-            <input type="date" value={startDate} onChange={e=>setStartDate(e.target.value)} className="px-3 py-2 rounded-2xl border bg-white dark:bg-slate-900" />
-            <input type="date" value={endDate} onChange={e=>setEndDate(e.target.value)} className="px-3 py-2 rounded-2xl border bg-white dark:bg-slate-900" />
-            <button onClick={fetchProfits} className="px-4 py-2 bg-indigo-600 text-white rounded-2xl font-black">Calcular</button>
-          </div>
-        </div>
-
-        <div className="mb-4">
-          <p className="text-sm font-black mb-2">Barbeiros (selecione para filtrar):</p>
-          <div className="flex flex-wrap gap-2">
-            {professionals.map(p => (
-              <label key={p.id} className="inline-flex items-center gap-2 bg-slate-50 dark:bg-slate-800 px-3 py-2 rounded-2xl border">
-                <input type="checkbox" checked={selectedProfessionals.includes(p.id)} onChange={e => {
-                  if (e.target.checked) setSelectedProfessionals(prev=>[...prev,p.id]); else setSelectedProfessionals(prev=>prev.filter(x=>x!==p.id));
-                }} />
-                <span className="text-sm font-bold">{p.name}</span>
-              </label>
-            ))}
-          </div>
-        </div>
-
-        <div>
-          {profitLoading ? (
-            <div>Carregando...</div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {profits.length === 0 ? (
-                <div className="col-span-1 text-sm text-slate-400">Nenhum resultado. Escolha período/empresa e clique em Calcular.</div>
-              ) : (
-                profits.map(p => (
-                  <div key={p.id} className="p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl border flex flex-col justify-between">
-                    <div>
-                      <p className="text-sm font-black">{p.name}</p>
-                      <p className="text-xs text-slate-500">Atendimentos: {p.count}</p>
-                    </div>
-                    <div className="text-right mt-3">
-                      <p className="text-indigo-600 font-black">R$ {p.total.toFixed(2)}</p>
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
-          )}
-        </div>
-      </div>
+      
 
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
         <div className="bg-white dark:bg-slate-900 p-10 rounded-[2.5rem] shadow-sm border border-slate-200 dark:border-slate-800 min-h-[500px] flex flex-col transition-colors">
