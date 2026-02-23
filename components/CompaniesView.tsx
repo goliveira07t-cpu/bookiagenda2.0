@@ -22,7 +22,8 @@ import {
   PowerOff,
   AlertTriangle,
   Trash2,
-  Package
+  Package,
+  Camera
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 
@@ -54,9 +55,27 @@ const CompaniesView: React.FC = () => {
   });
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
     fetchCompanies();
     fetchPlans();
   }, []);
+
+  const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const url = e.target.value;
+    setFormData({...formData, logo_url: url});
+    if (url) {
+      setLogoPreview(url);
+    } else {
+      setLogoPreview(null);
+    }
+  };
+
+  const handleLogoUrlBlur = (url: string) => {
+    if (url) {
+      setLogoPreview(url);
+    }
+  };
 
   const fetchPlans = async () => {
     const { data } = await supabase
@@ -95,6 +114,7 @@ const CompaniesView: React.FC = () => {
       plan: availablePlans.length > 0 ? availablePlans[0].name : '',
       logo_url: ''
     });
+    setLogoPreview(null);
     setIsModalOpen(true);
   };
 
@@ -111,8 +131,9 @@ const CompaniesView: React.FC = () => {
       access_password: company.access_password || '',
       category: company.category || 'Barbearia',
       plan: company.plan || '',
-      logo_url: ''
+      logo_url: company.logo_url || ''
     });
+    setLogoPreview(company.logo_url || null);
     setIsModalOpen(true);
   };
 
@@ -147,6 +168,7 @@ const CompaniesView: React.FC = () => {
         access_password: formData.access_password,
         category: formData.category,
         plan: formData.plan,
+        logo_url: formData.logo_url || null,
         status: isEditing ? undefined : 'ACTIVE'
       };
 
@@ -167,6 +189,7 @@ const CompaniesView: React.FC = () => {
       if (error) throw error;
 
       setIsModalOpen(false);
+      setLogoPreview(null);
       await fetchCompanies();
     } catch (error: any) {
       alert('Erro ao processar: ' + error.message);
@@ -249,8 +272,12 @@ const CompaniesView: React.FC = () => {
                 <tr key={company.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors group">
                   <td className="px-8 py-6">
                     <div className="flex items-center gap-4">
-                      <div className={`w-12 h-12 rounded-2xl flex items-center justify-center font-black text-lg shadow-inner group-hover:scale-110 transition-transform ${company.status === 'INACTIVE' ? 'bg-slate-100 dark:bg-slate-800 text-slate-400' : 'bg-indigo-50 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400'}`}>
-                        {company.name?.charAt(0) || 'B'}
+                      <div className={`w-14 h-14 rounded-2xl flex items-center justify-center font-black text-lg shadow-inner group-hover:scale-110 transition-transform overflow-hidden ${company.status === 'INACTIVE' ? 'bg-slate-100 dark:bg-slate-800 text-slate-400' : 'bg-indigo-50 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400'}`}>
+                        {company.logo_url ? (
+                          <img src={company.logo_url} alt={company.name} className="w-full h-full object-cover" />
+                        ) : (
+                          company.name?.charAt(0) || 'B'
+                        )}
                       </div>
                       <div>
                         <p className={`text-sm font-black leading-none mb-1 ${company.status === 'INACTIVE' ? 'text-slate-400 dark:text-slate-600 line-through' : 'text-slate-900 dark:text-white'}`}>{company.name}</p>
@@ -436,6 +463,33 @@ const CompaniesView: React.FC = () => {
                       placeholder="Mín. 8 chars, letras e números"
                     />
                   </div>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1">URL da Logomarca</label>
+                <div className="relative group">
+                  {logoPreview && (
+                    <div className="mb-4 flex items-center gap-4 p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700">
+                      <img src={logoPreview} alt="Logo Preview" className="w-16 h-16 object-contain rounded-lg bg-white dark:bg-slate-900 p-2" />
+                      <div className="flex-1">
+                        <p className="text-xs font-bold text-slate-600 dark:text-slate-300">Preview da Logo</p>
+                        <p className="text-[10px] text-slate-400 dark:text-slate-500 truncate mt-1 font-mono">{logoPreview}</p>
+                      </div>
+                    </div>
+                  )}
+                  <div className="relative">
+                    <Camera className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 dark:text-slate-600 group-focus-within:text-indigo-600 transition-colors" size={18} />
+                    <input 
+                      type="url"
+                      className="w-full pl-11 pr-4 py-4 rounded-2xl bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800 focus:border-indigo-500 dark:focus:border-indigo-500 focus:bg-white dark:focus:bg-slate-900 outline-none font-bold text-sm transition-all dark:text-white dark:placeholder:text-slate-700"
+                      value={formData.logo_url} 
+                      onChange={handleLogoChange}
+                      onBlur={(e) => handleLogoUrlBlur(e.target.value)}
+                      placeholder="https://exemplo.com/logo.png"
+                    />
+                  </div>
+                  <p className="text-xs text-slate-400 dark:text-slate-600 font-medium mt-2">Cole aqui a URL da logomarca (recomendado: PNG ou JPG)</p>
                 </div>
               </div>
 
