@@ -239,6 +239,7 @@ const CompanyPortal: React.FC<CompanyPortalProps> = ({ company, onLogout, theme,
   ];
 
   const [socialForm, setSocialForm] = useState({ whatsapp_url: '', instagram_url: '' });
+  const [notification, setNotification] = useState<{ show: boolean; message: string; type: 'success' | 'error' | 'info' }>({ show: false, message: '', type: 'success' });
 
   useEffect(() => {
     fetchDashboardStats();
@@ -285,8 +286,13 @@ const CompanyPortal: React.FC<CompanyPortalProps> = ({ company, onLogout, theme,
     const baseUrl = window.location.origin;
     // Customizado para usar o parâmetro 'companyId' que ativa a visão pública no App.tsx
     const link = `${baseUrl}/?companyId=${company.id}`;
-    navigator.clipboard.writeText(link);
-    alert('Link público copiado!');
+    navigator.clipboard.writeText(link).then(() => {
+      setNotification({ show: true, message: 'Link público copiado!', type: 'success' });
+      setTimeout(() => setNotification({ show: false, message: '', type: 'success' }), 3000);
+    }).catch(() => {
+      setNotification({ show: true, message: 'Erro ao copiar link', type: 'error' });
+      setTimeout(() => setNotification({ show: false, message: '', type: 'error' }), 3000);
+    });
   };
 
   const fetchCompanyProfile = async () => {
@@ -1355,6 +1361,35 @@ const CompanyPortal: React.FC<CompanyPortalProps> = ({ company, onLogout, theme,
 
         <footer className="p-10 text-center mt-auto border-t border-slate-100 dark:border-slate-800 opacity-20"><p className="text-[10px] font-black text-slate-300 dark:text-slate-700 uppercase tracking-[0.4em]">BOOKI SaaS FRAMEWORK • 2024</p></footer>
       </main>
+
+      {/* Toast Notification */}
+      {notification.show && (
+        <div className="fixed bottom-6 left-6 right-6 md:left-auto md:right-6 md:max-w-sm z-50 animate-in slide-in-from-bottom-5 duration-300">
+          <div className={`flex items-center gap-4 px-6 py-4 rounded-2xl shadow-lg font-semibold text-white border ${
+            notification.type === 'success' 
+              ? 'bg-emerald-500 border-emerald-600' 
+              : notification.type === 'error'
+              ? 'bg-rose-500 border-rose-600'
+              : 'bg-indigo-500 border-indigo-600'
+          }`}>
+            <div className={`w-5 h-5 rounded-full flex items-center justify-center ${
+              notification.type === 'success' 
+                ? 'bg-emerald-600' 
+                : notification.type === 'error'
+                ? 'bg-rose-600'
+                : 'bg-indigo-600'
+            }`}>
+              {notification.type === 'success' && <CheckCircle2 size={14} />}
+              {notification.type === 'error' && <X size={14} />}
+              {notification.type === 'info' && <Bell size={14} />}
+            </div>
+            <span className="flex-1">{notification.message}</span>
+            <button onClick={() => setNotification({ ...notification, show: false })} className="text-white/60 hover:text-white transition-colors">
+              <X size={18} />
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
