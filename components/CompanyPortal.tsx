@@ -208,6 +208,7 @@ const CompanyPortal: React.FC<CompanyPortalProps> = ({ company, onLogout, theme,
 
   const [financeItems, setFinanceItems] = useState<any[]>([]);
   const [dateFilter, setDateFilter] = useState('month');
+  const [selectedProfessional, setSelectedProfessional] = useState<string>('');
   const [financeSummary, setFinanceSummary] = useState({ daily: 0, monthly: 0, professionalTotal: 0, periodTotal: 0 });
   
   const timeSlots = ['09:00', '09:40', '10:20', '11:00', '11:40', '12:20', '13:00', '13:40', '14:20', '15:00', '15:40', '16:20', '17:00'];
@@ -455,7 +456,8 @@ const CompanyPortal: React.FC<CompanyPortalProps> = ({ company, onLogout, theme,
         amount: Number(b.services?.price || 0),
         client: b.client_name,
         service: b.services?.name || 'Serviço',
-        professional: b.professionals?.name
+        professional: b.professionals?.name,
+        professional_id: b.professional_id || b.professionals?.id
       }));
       const daily = items.filter(i => i.dateStr === todayStr).reduce((acc, curr) => acc + curr.amount, 0);
       const monthly = items.reduce((acc, curr) => acc + curr.amount, 0);
@@ -964,6 +966,32 @@ const CompanyPortal: React.FC<CompanyPortalProps> = ({ company, onLogout, theme,
           />
         );
       case 'financeiro':
+        // compute filtered finance items according to selected professional and dateFilter
+        const todayStr = new Date().toISOString().split('T')[0];
+        const isInPeriod = (isoDate: string) => {
+          try {
+            const d = new Date(isoDate);
+            const now = new Date();
+            if (dateFilter === 'week') {
+              const sevenDaysAgo = new Date(now);
+              sevenDaysAgo.setDate(now.getDate() - 7);
+              return d >= sevenDaysAgo && d <= now;
+            }
+            // default to month (current month)
+            return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+          } catch (e) { return false; }
+        };
+
+        const filteredFinanceItems = financeItems.filter((it: any) => {
+          if (!isInPeriod(it.date)) return false;
+          if (selectedProfessional && selectedProfessional !== '') return it.professional_id === selectedProfessional || it.professional === selectedProfessional || it.professional_id === Number(selectedProfessional);
+          return true;
+        });
+
+        const dailyFiltered = filteredFinanceItems.filter((i: any) => i.date.split('T')[0] === todayStr).reduce((acc: number, cur: any) => acc + (cur.amount || 0), 0);
+        const periodFiltered = filteredFinanceItems.reduce((acc: number, cur: any) => acc + (cur.amount || 0), 0);
+        const totalTransactionsFiltered = filteredFinanceItems.length;
+
         return (
           <div className="space-y-8 animate-in fade-in duration-500">
              <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
@@ -974,11 +1002,23 @@ const CompanyPortal: React.FC<CompanyPortalProps> = ({ company, onLogout, theme,
             </div>
 
             <div className="bg-white dark:bg-slate-900 rounded-[3rem] p-10 shadow-xl shadow-slate-200/50 dark:shadow-none border border-white dark:border-slate-800">
-              <div className="flex items-center gap-4 mb-8">
+              <div className="flex items-center gap-4 mb-8 justify-between">
                 <div className="p-4 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 rounded-2xl">
                   <DollarSign size={24} />
                 </div>
                 <h3 className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tighter">Histórico de Transações</h3>
+                <div className="flex items-center gap-3">
+                  <select value={selectedProfessional} onChange={(e) => setSelectedProfessional(e.target.value)} className="text-sm font-black bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-xl px-4 py-2">
+                    <option value="">Todos os profissionais</option>
+                    {professionals.map((p: any) => (
+                      <option key={p.id} value={p.id}>{p.name}</option>
+                    ))}
+                  </select>
+                  <select value={dateFilter} onChange={(e) => setDateFilter(e.target.value)} className="text-sm font-black bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-xl px-4 py-2">
+                    <option value="month">Mês</option>
+                    <option value="week">Últimos 7 dias</option>
+                  </select>
+                </div>
               </div>
               
               <div className="overflow-x-auto">
@@ -993,16 +1033,16 @@ const CompanyPortal: React.FC<CompanyPortalProps> = ({ company, onLogout, theme,
                     </tr>
                   </thead>
                   <tbody className="text-sm font-bold text-slate-700 dark:text-slate-300">
-                    {financeItems.slice(0, 10).map((item: any) => (
+                    {filteredFinanceItems.slice(0, 10).map((item: any) => (
                       <tr key={item.id} className="border-b border-slate-50 dark:border-slate-800/50 last:border-0 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
                         <td className="py-4 pl-4">{new Date(item.date).toLocaleDateString('pt-BR')} <span className="text-slate-400 text-xs ml-1">{new Date(item.date).toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'})}</span></td>
                         <td className="py-4">{item.client}</td>
                         <td className="py-4">{item.service}</td>
                         <td className="py-4">{item.professional || '-'}</td>
-                        <td className="py-4 text-right pr-4 text-emerald-600 dark:text-emerald-400">R$ {item.amount.toFixed(2)}</td>
+                        <td className="py-4 text-right pr-4 text-emerald-600 dark:text-emerald-400">R$ {(item.amount || 0).toFixed(2)}</td>
                       </tr>
                     ))}
-                    {financeItems.length === 0 && (
+                    {filteredFinanceItems.length === 0 && (
                       <tr>
                         <td colSpan={5} className="py-8 text-center text-slate-400 text-xs uppercase tracking-widest">Nenhuma transação registrada</td>
                       </tr>
