@@ -328,8 +328,12 @@ const PublicBookingView: React.FC<PublicBookingViewProps> = ({ companyId, slug, 
             </div>
 
             <div className="bg-white dark:bg-slate-900 w-full max-w-md rounded-[2.5rem] p-10 flex flex-col items-center shadow-2xl relative z-10 animate-in fade-in zoom-in-95 duration-500 border border-slate-100 dark:border-slate-800">
-              <div className="w-24 h-24 bg-indigo-600 rounded-[2rem] flex items-center justify-center text-white mb-6 shadow-xl shadow-indigo-200 dark:shadow-none -mt-20 border-4 border-white dark:border-slate-900">
-                 <span className="text-3xl font-black">{company?.name?.charAt(0)}</span>
+              <div className="w-24 h-24 bg-indigo-600 rounded-[2rem] flex items-center justify-center text-white mb-6 shadow-xl shadow-indigo-200 dark:shadow-none -mt-20 border-4 border-white dark:border-slate-900 overflow-hidden">
+                 {company?.logo_url ? (
+                   <img src={company.logo_url} alt={company?.name} className="w-full h-full object-contain" />
+                 ) : (
+                   <span className="text-3xl font-black">{company?.name?.charAt(0)}</span>
+                 )}
               </div>
               <h1 className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tight mb-1">{company?.name}</h1>
               <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-8">Portal do Cliente</p>
