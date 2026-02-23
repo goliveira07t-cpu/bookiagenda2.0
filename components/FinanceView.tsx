@@ -175,7 +175,52 @@ const FinanceView: React.FC = () => {
         )}
       </div>
       
-      {/* Lucros por Barbeiro Section */}
+      
+      <div>
+        <h3 className="text-slate-400 dark:text-slate-500 text-[10px] font-black uppercase tracking-[0.2em] mb-1">{title}</h3>
+        <p className="text-3xl font-black text-slate-900 dark:text-white tracking-tighter">{value}</p>
+        <p className="text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-tight mt-2">{subtitle}</p>
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="space-y-8 animate-in fade-in duration-500">
+      <div className="flex justify-end">
+        <button 
+          onClick={fetchFinanceStats} 
+          className="p-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-400 transition-all shadow-sm flex items-center gap-2 text-[10px] font-black uppercase tracking-widest"
+        >
+          <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
+          Atualizar Dados
+        </button>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <MetricCard 
+          title="Faturamento Mensal (MRR)" 
+          value={`R$ ${financeData.totalMRR.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`} 
+          subtitle="Receita recorrente global"
+          icon={DollarSign}
+          trend={12.4}
+        />
+        <MetricCard 
+          title="Empresas Ativas" 
+          value={financeData.activeCompanies} 
+          subtitle="Assinaturas pagas agora"
+          icon={Users}
+          trend={8.1}
+        />
+        <MetricCard 
+          title="ARPU (Ticket Médio)" 
+          value={`R$ ${financeData.arpu.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`} 
+          subtitle="Receita média por empresa"
+          icon={Target}
+          trend={2.3}
+        />
+      </div>
+
+      {/* Inserir seção Lucros por Barbeiro aqui */}
       <div className="mt-8 bg-white dark:bg-slate-900 p-8 rounded-[2.5rem] border border-slate-200 dark:border-slate-800 shadow-sm">
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-xl font-black text-slate-900 dark:text-white">Lucros por Barbeiro</h2>
@@ -227,49 +272,6 @@ const FinanceView: React.FC = () => {
             </div>
           )}
         </div>
-      </div>
-      <div>
-        <h3 className="text-slate-400 dark:text-slate-500 text-[10px] font-black uppercase tracking-[0.2em] mb-1">{title}</h3>
-        <p className="text-3xl font-black text-slate-900 dark:text-white tracking-tighter">{value}</p>
-        <p className="text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-tight mt-2">{subtitle}</p>
-      </div>
-    </div>
-  );
-
-  return (
-    <div className="space-y-8 animate-in fade-in duration-500">
-      <div className="flex justify-end">
-        <button 
-          onClick={fetchFinanceStats} 
-          className="p-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-400 transition-all shadow-sm flex items-center gap-2 text-[10px] font-black uppercase tracking-widest"
-        >
-          <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
-          Atualizar Dados
-        </button>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <MetricCard 
-          title="Faturamento Mensal (MRR)" 
-          value={`R$ ${financeData.totalMRR.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`} 
-          subtitle="Receita recorrente global"
-          icon={DollarSign}
-          trend={12.4}
-        />
-        <MetricCard 
-          title="Empresas Ativas" 
-          value={financeData.activeCompanies} 
-          subtitle="Assinaturas pagas agora"
-          icon={Users}
-          trend={8.1}
-        />
-        <MetricCard 
-          title="ARPU (Ticket Médio)" 
-          value={`R$ ${financeData.arpu.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`} 
-          subtitle="Receita média por empresa"
-          icon={Target}
-          trend={2.3}
-        />
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
