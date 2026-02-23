@@ -330,12 +330,12 @@ const PublicBookingView: React.FC<PublicBookingViewProps> = ({ companyId, slug, 
             </div>
 
             <div className="bg-white dark:bg-slate-900 w-full max-w-md rounded-[2.5rem] p-10 flex flex-col items-center shadow-2xl relative z-10 animate-in fade-in zoom-in-95 duration-500 border border-slate-100 dark:border-slate-800">
-              <div className="w-24 h-24 bg-indigo-600 rounded-[2rem] flex items-center justify-center text-white mb-6 shadow-xl shadow-indigo-200 dark:shadow-none -mt-20 border-4 border-white dark:border-slate-900 overflow-hidden">
+              <div className="w-24 h-24 bg-white rounded-[2rem] flex items-center justify-center mb-6 shadow-xl shadow-indigo-200 dark:shadow-none -mt-20 border-4 border-white dark:border-slate-900 overflow-hidden p-0">
                  {company?.logo_url && !logoLoadError ? (
                    <img 
                      src={company.logo_url} 
                      alt={company?.name} 
-                     className="w-full h-full object-contain" 
+                     className="block w-full h-full object-cover" 
                      onError={() => setLogoLoadError(true)}
                    />
                  ) : (
