@@ -73,6 +73,7 @@ const PublicBookingView: React.FC<PublicBookingViewProps> = ({ companyId, slug, 
   const [clientBookings, setClientBookings] = useState<any[]>([]);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [showHelpMessage, setShowHelpMessage] = useState(true);
+  const [logoLoadError, setLogoLoadError] = useState(false);
   
   const [bookingForm, setBookingForm] = useState({ professional_id: '', service_id: '', start_time: '' });
   const timeSlots = ['09:00', '09:40', '10:20', '11:00', '11:40', '12:20', '13:00', '13:40', '14:20', '15:00', '15:40', '16:20', '17:00'];
@@ -80,6 +81,7 @@ const PublicBookingView: React.FC<PublicBookingViewProps> = ({ companyId, slug, 
   useEffect(() => {
     checkUser();
     fetchCompanyData();
+    setLogoLoadError(false);
   }, [companyId, slug]);
 
   useEffect(() => {
@@ -329,8 +331,13 @@ const PublicBookingView: React.FC<PublicBookingViewProps> = ({ companyId, slug, 
 
             <div className="bg-white dark:bg-slate-900 w-full max-w-md rounded-[2.5rem] p-10 flex flex-col items-center shadow-2xl relative z-10 animate-in fade-in zoom-in-95 duration-500 border border-slate-100 dark:border-slate-800">
               <div className="w-24 h-24 bg-indigo-600 rounded-[2rem] flex items-center justify-center text-white mb-6 shadow-xl shadow-indigo-200 dark:shadow-none -mt-20 border-4 border-white dark:border-slate-900 overflow-hidden">
-                 {company?.logo_url ? (
-                   <img src={company.logo_url} alt={company?.name} className="w-full h-full object-contain" />
+                 {company?.logo_url && !logoLoadError ? (
+                   <img 
+                     src={company.logo_url} 
+                     alt={company?.name} 
+                     className="w-full h-full object-contain" 
+                     onError={() => setLogoLoadError(true)}
+                   />
                  ) : (
                    <span className="text-3xl font-black">{company?.name?.charAt(0)}</span>
                  )}
