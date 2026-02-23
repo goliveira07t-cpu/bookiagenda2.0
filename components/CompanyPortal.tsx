@@ -224,6 +224,7 @@ const CompanyPortal: React.FC<CompanyPortalProps> = ({ company, onLogout, theme,
   });
 
   const [profForm, setProfForm] = useState({ name: '', phone: '' });
+  const [serviceForm, setServiceForm] = useState({ name: '', duration: 30, price: 0 });
   
   const [stats, setStats] = useState({ bookings: 0, clients: 0, revenue: 0, services: 0 });
 
@@ -582,6 +583,31 @@ const CompanyPortal: React.FC<CompanyPortalProps> = ({ company, onLogout, theme,
       fetchDashboardStats();
     } catch (err: any) {
       alert(err.message);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleCreateService = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSubmitting(true);
+    try {
+      if (!serviceForm.name) throw new Error('Nome do serviço é obrigatório');
+      const payload: any = {
+        company_id: company.id,
+        name: serviceForm.name,
+        duration: Number(serviceForm.duration) || 30,
+        price: Number(serviceForm.price) || 0
+      };
+      const { error } = await supabase.from('services').insert([payload]);
+      if (error) throw error;
+      setIsAddServiceModalOpen(false);
+      setServiceForm({ name: '', duration: 30, price: 0 });
+      // Refresh services list
+      fetchTableData('services');
+      fetchSupportData();
+    } catch (err: any) {
+      alert(err.message || 'Erro ao salvar serviço');
     } finally {
       setSubmitting(false);
     }
@@ -1371,6 +1397,39 @@ const CompanyPortal: React.FC<CompanyPortalProps> = ({ company, onLogout, theme,
                 </div>
                 <div className="pt-4"><button type="submit" disabled={submitting} className="w-full text-white py-6 rounded-[2rem] font-black text-lg bg-indigo-600 hover:bg-indigo-700 active:scale-95 transition-all shadow-2xl flex items-center justify-center gap-3">
                   {submitting ? <div className="w-7 h-7 border-4 border-white/20 border-t-white rounded-full animate-spin"></div> : <>{editingBookingId ? 'Atualizar Profissional' : 'Cadastrar Profissional'} <CheckCircle2 size={24} /></>}
+                </button></div>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {isAddServiceModalOpen && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-slate-950/60 backdrop-blur-md animate-in fade-in duration-300">
+            <div className="bg-white dark:bg-slate-900 w-full max-w-lg rounded-[3.5rem] shadow-2xl animate-in zoom-in-95 flex flex-col border border-white/20 dark:border-slate-800">
+              <div className="p-10 pb-6 flex justify-between items-start">
+                <div className="flex gap-5">
+                  <div className="w-16 h-16 rounded-3xl bg-indigo-600 flex items-center justify-center text-white shadow-2xl"><Scissors size={32} /></div>
+                  <div><h2 className="text-3xl font-black text-slate-900 dark:text-white tracking-tighter">Novo Serviço</h2><p className="text-slate-400 dark:text-slate-500 text-xs font-black uppercase tracking-[0.2em] mt-2">Adicione um item ao cardápio</p></div>
+                </div>
+                <button onClick={() => { setIsAddServiceModalOpen(false); setServiceForm({ name: '', duration: 30, price: 0 }); }} className="p-4 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-3xl text-slate-400 transition-all"><X size={28} /></button>
+              </div>
+              <form onSubmit={handleCreateService} className="p-10 pt-4 space-y-6">
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2">Nome do Serviço</label>
+                  <input required className="w-full px-6 py-5 rounded-[1.5rem] bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800 outline-none font-bold text-sm text-slate-900 dark:text-white shadow-sm" value={serviceForm.name} onChange={e => setServiceForm({...serviceForm, name: e.target.value})} placeholder="Ex: Corte" />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2">Tempo Estimado (min)</label>
+                    <input required type="number" min={5} className="w-full px-6 py-5 rounded-[1.5rem] bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800 outline-none font-bold text-sm text-slate-900 dark:text-white shadow-sm" value={serviceForm.duration} onChange={e => setServiceForm({...serviceForm, duration: Number(e.target.value)})} />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2">Valor (R$)</label>
+                    <input required type="number" min={0} step="0.01" className="w-full px-6 py-5 rounded-[1.5rem] bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800 outline-none font-bold text-sm text-slate-900 dark:text-white shadow-sm" value={serviceForm.price} onChange={e => setServiceForm({...serviceForm, price: Number(e.target.value)})} />
+                  </div>
+                </div>
+                <div className="pt-4"><button type="submit" disabled={submitting} className="w-full text-white py-6 rounded-[2rem] font-black text-lg bg-indigo-600 hover:bg-indigo-700 active:scale-95 transition-all shadow-2xl flex items-center justify-center gap-3">
+                  {submitting ? <div className="w-7 h-7 border-4 border-white/20 border-t-white rounded-full animate-spin"></div> : <>Cadastrar Serviço <CheckCircle2 size={24} /></>}
                 </button></div>
               </form>
             </div>
